@@ -7,7 +7,7 @@
  *
  * Usage: summary bisect*out
  *
- * ocamlbuild -use-ocamlfind -pkg bisect_ppx summary.native
+ * ocamlbuild -use-ocamlfind -pkg bisect_ppx,cmdliner,unix summary.native
  *)
 
 module B  = Bisect.Common
@@ -108,13 +108,6 @@ let process
     ; List.iter (fun (name, counters) -> report name counters) runtime
     )
 
-let main () =
-  let args = Array.to_list Sys.argv in
-  let this = Sys.executable_name in
-  match args with
-  | [_] | [] -> Printf.eprintf "usage: %s bisect.out ...\n" this; exit 1
-  | _::files -> process files
-
 let init name =
   let (//)    = Filename.concat in
   let tmpdir  = Filename.get_temp_dir_name () in
@@ -123,11 +116,14 @@ let init name =
     with Not_found ->
       Unix.putenv "BISECT_FILE" (tmpdir // Printf.sprintf "bisect-%s-" name)
 
+let main =
+  let open Cmdliner in
+  let doc = "simple analysis of coverage data created by bisect-ppx" in
+  let files = Arg.(non_empty & pos_all file [] & info [] ~docv:"bisect.out") in
+  Term.(const process $ files),
+  Term.info "bisect-summary" ~version:"0.6" ~doc ~exits:Term.default_exits
+
+
 let () =
-  try
-    ( init "summary"
-    ; main ()
-    ; exit 0
-    )
-  with
-    e -> Printf.eprintf "Error: %s\n" (Printexc.to_string e); exit 1
+  init "summary";
+  Cmdliner.Term.(exit @@ eval main)
