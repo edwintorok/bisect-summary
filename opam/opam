@@ -17,7 +17,7 @@ remove: [
 ]
 depends: [
   "bisect_ppx"
-  "cmdliner"
+  "cmdliner" {>= "1.0.2"}
   "oasis" {build}
   "ocamlfind" {build}
 ]
