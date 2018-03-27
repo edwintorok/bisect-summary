@@ -68,10 +68,14 @@ let read
   = fun files ->
     files
     |> List.fold_left (fun accum file ->
-        file
-        |> B.read_runtime_data'
-        |> List.rev_map (fun (k, (count, _)) -> k, count)
-        |> merge accum
+        try
+          file
+          |> B.read_runtime_data'
+          |> List.rev_map (fun (k, (count, _)) -> k, count)
+          |> merge accum
+        with End_of_file ->
+          Printf.eprintf "Skipping corrupted bisect file: %s\n" file;
+          accum
       ) []
 
 (** [popcount array] returns the number of non-zero entries in an array
